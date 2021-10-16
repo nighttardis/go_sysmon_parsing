@@ -118,6 +118,9 @@ func fileWriter(writer chan []byte, fwg *sync.WaitGroup) {
 			fmt.Println("Close File Write")
 			return
 		}
+		if len(msg) == 0 {
+			continue
+		}
 		f.Write([]byte(string(msg) + "\n"))
 	}
 }
