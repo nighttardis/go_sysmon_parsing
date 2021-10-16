@@ -37,8 +37,10 @@ func main() {
 	signal.Notify(termChan, syscall.SIGTERM, syscall.SIGINT)
 
 	wg := &sync.WaitGroup{}
+	fwg := &sync.WaitGroup{}
 
-	go fileWriter(writer)
+	fwg.Add(1)
+	go fileWriter(writer, fwg)
 
 	go func() {
 		<-termChan
@@ -65,6 +67,8 @@ func main() {
 	fmt.Println("here")
 	wg.Wait()
 	close(writer)
+	fwg.Wait()
+	fmt.Println("Everything's Closed")
 }
 
 func handleRequest(conn net.Conn, writer chan []byte, wg *sync.WaitGroup, closeChannel chan interface{}) {
@@ -104,9 +108,10 @@ func handleRequest(conn net.Conn, writer chan []byte, wg *sync.WaitGroup, closeC
 
 }
 
-func fileWriter(writer chan []byte) {
+func fileWriter(writer chan []byte, fwg *sync.WaitGroup) {
 	f, _ := os.OpenFile("test.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
+	defer fwg.Done()
 	for {
 		msg := <-writer
 		f.Write([]byte(string(msg) + "\n"))
